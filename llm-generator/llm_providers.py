@@ -114,7 +114,7 @@ class AnthropicProvider(LLMProvider):
 class OllamaProvider(LLMProvider):
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
-        self.default_model = "codellama:7b-instruct"
+        self.default_model = "llama2"
 
     async def generate_code(self, prompt: str, model_params: Dict[str, Any] = None) -> Dict[str, Any]:
         try:

@@ -9,10 +9,8 @@ services:
       dockerfile: Dockerfile
     container_name: llm-generator
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - LLM_PROVIDER=openai  # openai, anthropic, ollama
-      - OLLAMA_URL=http://ollama:11436
+      - LLM_PROVIDER=ollama  # openai, anthropic, ollama
+      - OLLAMA_URL=http://ollama:11434  # Using the default Ollama port
       - REDIS_URL=redis://redis:6379
       - SMTP_SERVICE_URL=http://smtp-service:5000
     ports:
@@ -38,13 +36,14 @@ services:
       - OLLAMA_HOST=0.0.0.0
     networks:
       - llm-network
-    # Deploy specific model
+    # Start the Ollama service and pull models in the background
+    entrypoint: "/bin/sh"
     command: >
-      sh -c "ollama serve & 
-             sleep 10 && 
-             ollama pull codellama:7b-instruct &&
-             ollama pull mistral:7b-instruct &&
-             wait"
+      -c "ollama serve &
+          sleep 5 &&
+          ollama pull codellama:7b-instruct &
+          ollama pull mistral:7b-instruct &
+          wait"
 
   # SMTP Distribution Service
   smtp-service:
