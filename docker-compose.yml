@@ -37,13 +37,14 @@ services:
       - OLLAMA_HOST=0.0.0.0
     networks:
       - llm-network
-    # Start the Ollama service and pull models in the background
+    # Start the Ollama service and pull the llama2 model
     entrypoint: "/bin/sh"
     command: >
       -c "ollama serve &
           sleep 5 &&
-          ollama pull codellama:7b-instruct &
-          ollama pull mistral:7b-instruct &
+          echo 'Pulling llama2 model...' &&
+          ollama pull llama2 &&
+          echo 'Model pull complete. Ready for requests.' &&
           wait"
 
   # SMTP Distribution Service
