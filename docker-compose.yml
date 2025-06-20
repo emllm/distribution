@@ -1,0 +1,143 @@
+# Kompletny system LLM Email Distribution
+version: '3.8'
+
+services:
+  # LLM Code Generator Service
+  llm-generator:
+    build:
+      context: ./llm-generator
+      dockerfile: Dockerfile
+    container_name: llm-generator
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_PROVIDER=openai  # openai, anthropic, ollama
+      - OLLAMA_URL=http://ollama:11434
+      - REDIS_URL=redis://redis:6379
+      - SMTP_SERVICE_URL=http://smtp-service:5000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - ollama
+    volumes:
+      - ./templates:/app/templates
+      - ./generated:/app/generated
+    networks:
+      - llm-network
+
+  # Local LLM Service (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-llm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - llm-network
+    # Deploy specific model
+    command: >
+      sh -c "ollama serve & 
+             sleep 10 && 
+             ollama pull codellama:7b-instruct &&
+             ollama pull mistral:7b-instruct &&
+             wait"
+
+  # SMTP Distribution Service
+  smtp-service:
+    build:
+      context: ./smtp-service
+      dockerfile: Dockerfile
+    container_name: smtp-distribution
+    environment:
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_USE_TLS=${SMTP_USE_TLS:-true}
+      - REDIS_URL=redis://redis:6379
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-secret123}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    volumes:
+      - ./email-templates:/app/templates
+      - ./attachments:/app/attachments
+    networks:
+      - llm-network
+
+  # Redis for job queue and caching
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - llm-network
+
+  # MailHog for local SMTP testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog-smtp
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - llm-network
+
+  # Webhook receiver for testing
+  webhook-receiver:
+    build:
+      context: ./webhook-receiver
+      dockerfile: Dockerfile
+    container_name: webhook-receiver
+    ports:
+      - "9000:9000"
+    environment:
+      - LLM_SERVICE_URL=http://llm-generator:8000
+    networks:
+      - llm-network
+
+  # Monitoring and Logs
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - llm-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - llm-network
+
+volumes:
+  ollama_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  llm-network:
+    driver: bridge
+
+
+

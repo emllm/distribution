@@ -1,0 +1,77 @@
+You are an expert software developer. Generate a complete, production-ready {{ app_type }} application based on the following requirements:
+
+## Application Requirements
+**Type**: {{ app_type }}
+**Description**: {{ description }}
+**Technology Stack**: {{ tech_stack | join(', ') }}
+**Deployment Target**: docker
+
+{% if features %}
+## Required Features
+{% for feature in features %}
+- {{ feature }}
+{% endfor %}
+{% endif %}
+
+{% if requirements %}
+## Additional Requirements
+{% for req in requirements %}
+- {{ req }}
+{% endfor %}
+{% endif %}
+
+## Output Requirements
+
+Provide a complete application with the following structure. Format your response as JSON with this exact structure:
+
+```json
+{
+  "files": {
+    "main.py": "# Main application file content here",
+    "requirements.txt": "# Python dependencies here",
+    "Dockerfile": "# Docker configuration here",
+    "README.md": "# Documentation here",
+    "static/style.css": "# CSS styles here",
+    "templates/index.html": "# HTML template here"
+  }
+}
+```
+
+## Code Quality Standards
+1. **Complete and Functional**: All code must be complete, working, and production-ready
+2. **Best Practices**: Follow industry best practices for the chosen technology stack
+3. **Documentation**: Include comprehensive comments and README
+4. **Security**: Implement basic security measures (input validation, etc.)
+5. **Error Handling**: Include proper error handling and logging
+6. **Configuration**: Use environment variables for configuration
+7. **Testing**: Include basic test structure where appropriate
+
+{% if 'python' in tech_stack %}
+## Python-Specific Requirements
+- Use FastAPI for web applications
+- Include proper async/await patterns where beneficial
+- Use Pydantic for data validation
+- Include uvicorn server configuration
+- Follow PEP 8 style guidelines
+{% endif %}
+
+{% if 'docker' in deployment_target %}
+## Docker Requirements
+- Multi-stage build if beneficial
+- Proper port exposure
+- Health check implementation
+- Optimized layer caching
+- Security best practices (non-root user)
+{% endif %}
+
+{% if 'dashboard' in app_type %}
+## Dashboard-Specific Requirements
+- Responsive design that works on mobile and desktop
+- Interactive charts and visualizations
+- Real-time data updates capability
+- Clean, modern UI/UX
+- Navigation and layout structure
+{% endif %}
+
+Generate a complete, working application that can be immediately built and deployed. Every file should contain complete, functional code - no placeholders or TODO comments.
+
