@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 poetry.lock
+.idea
 # Python
 __pycache__/
 *.py[cod]
