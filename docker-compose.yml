@@ -13,6 +13,7 @@ services:
       - OLLAMA_URL=http://ollama:11434  # Using the default Ollama port
       - REDIS_URL=redis://redis:6379
       - SMTP_SERVICE_URL=http://smtp-service:5000
+      - API_TOKEN=${API_TOKEN}  # Add API token for authentication
     ports:
       - "${LLM_GENERATOR_PORT}"
     depends_on:
@@ -96,10 +97,12 @@ services:
       context: ./webhook-receiver
       dockerfile: Dockerfile
     container_name: webhook-receiver
+    environment:
+      - LLM_SERVICE_URL=http://llm-generator:8000  # Updated to use internal Docker network
+      - FLASK_ENV=development
+      - API_TOKEN=${API_TOKEN}
     ports:
       - "${WEBHOOK_RECEIVER_PORT}"
-    environment:
-      - LLM_SERVICE_URL=http://llm-generator:8006
     networks:
       - llm-network
 

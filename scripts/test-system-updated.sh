@@ -1,11 +1,25 @@
 #!/bin/bash
 
+# Source environment variables from the project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Load environment variables
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+fi
+
 echo "🧪 Testing LLM Email Distribution System with Updated Ports"
 
-API_TOKEN=${API_TOKEN:-"dev-token-123"}
-BASE_URL="http://localhost:8080"  # Updated port
-SMTP_URL="http://localhost:5001"  # Updated port
-WEBHOOK_URL="http://localhost:9001"  # Updated port
+API_TOKEN=${API_TOKEN:-$API_TOKEN}
+if [ -z "$API_TOKEN" ]; then
+    echo "❌ API_TOKEN is not set. Please set it in the .env file"
+    exit 1
+fi
+
+BASE_URL="http://localhost:8080"  # LLM Generator port
+SMTP_URL="http://localhost:5001"  # SMTP Service port
+WEBHOOK_URL="http://localhost:9001"  # Webhook Receiver port
 
 # Test 1: Health Check
 echo "1️⃣ Testing health endpoints..."
